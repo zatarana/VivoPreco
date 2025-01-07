@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora Vivo Total</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      padding: 0;
+      background-color: #f7f7f7;
+    }
+    h1 {
+      text-align: center;
+      color: #4a148c;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+    }
+    select, input[type="number"], button {
+      width: 100%;
+      margin-top: 5px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #4a148c;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #6a1b9a;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f3e5f5;
+      border-left: 4px solid #4a148c;
+    }
+    .result strong {
+      color: #4a148c;
+    }
+  </style>
+</head>
+<body>
+  <h1>Calculadora Vivo Total</h1>
+  <div class="container">
+    <label for="plan">Selecione o Plano:</label>
+    <select id="plan">
+      <option value="150,Vivo Total Pro,0">Vivo Total Pro (R$ 150)</option>
+      <option value="270,Vivo Total Família 2,1">Vivo Total Família 2 (R$ 270)</option>
+      <option value="330,Vivo Total Família 3,2">Vivo Total Família 3 (R$ 330)</option>
+      <option value="420,Vivo Total Família 4,3">Vivo Total Família 4 (R$ 420)</option>
+      <option value="520,Vivo Total Família 5,4">Vivo Total Família 5 (R$ 520)</option>
+      <option value="1200,Vivo Total V,10">Vivo Total V (R$ 1200)</option>
+    </select>
+
+    <label for="additional-lines">Linhas Adicionais:</label>
+    <input type="number" id="additional-lines" placeholder="Digite o número de linhas adicionais" min="0">
+
+    <label for="include-tv">Incluir TV? (R$ 140)</label>
+    <input type="checkbox" id="include-tv">
+
+    <button onclick="calculate()">Calcular</button>
+
+    <div id="result" class="result" style="display: none;">
+      <p><strong>Custo Total:</strong> <span id="total-cost"></span></p>
+      <p><strong>Plano Mais Econômico:</strong> <span id="cheapest-plan"></span></p>
+    </div>
+  </div>
+
+  <script>
+    function calculate() {
+      const plans = [
+        { name: "Vivo Total Pro", basePrice: 150, freeLines: 0 },
+        { name: "Vivo Total Família 2", basePrice: 270, freeLines: 1 },
+        { name: "Vivo Total Família 3", basePrice: 330, freeLines: 2 },
+        { name: "Vivo Total Família 4", basePrice: 420, freeLines: 3 },
+        { name: "Vivo Total Família 5", basePrice: 520, freeLines: 4 },
+        { name: "Vivo Total V", basePrice: 1200, freeLines: 10 },
+      ];
+
+      const selectedPlanValue = document.getElementById("plan").value.split(",");
+      const basePrice = parseInt(selectedPlanValue[0]);
+      const planName = selectedPlanValue[1];
+      const freeLines = parseInt(selectedPlanValue[2]);
+
+      const additionalLines = parseInt(document.getElementById("additional-lines").value) || 0;
+      const includeTv = document.getElementById("include-tv").checked;
+
+      const additionalLinesCost = additionalLines > freeLines ? (additionalLines - freeLines) * 50 : 0;
+      const tvCost = includeTv ? 140 : 0;
+      const totalCost = basePrice + additionalLinesCost + tvCost;
+
+      // Determine the cheapest plan
+      let cheapestPlan = "";
+      let cheapestCost = Infinity;
+      plans.forEach((plan) => {
+        const extraLinesCost = additionalLines > plan.freeLines ? (additionalLines - plan.freeLines) * 50 : 0;
+        const costWithTv = includeTv ? 140 : 0;
+        const total = plan.basePrice + extraLinesCost + costWithTv;
+
+        if (total < cheapestCost) {
+          cheapestCost = total;
+          cheapestPlan = `${plan.name} (R$ ${total})`;
+        }
+      });
+
+      // Update the result
+      document.getElementById("total-cost").innerText = `R$ ${totalCost}`;
+      document.getElementById("cheapest-plan").innerText = cheapestPlan;
+      document.getElementById("result").style.display = "block";
+    }
+  </script>
+</body>
+</html>
