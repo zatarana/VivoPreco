@@ -19,6 +19,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Run Clean Core smoke tests
+        run: node tools/clean-core-smoke-test.js
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
