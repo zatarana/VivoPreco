@@ -13,6 +13,9 @@ window.AppExtensions=(function(){
 
     if(action==='addTime'){TimeUI.addTimeForm(id);return true;}
     if(action&&action.startsWith('saveManualTime:')){TimeUI.saveManualTime(action.split(':')[1]);return true;}
+    if(action==='editTimeLog'){TimeUI.editLogForm(id);return true;}
+    if(action&&action.startsWith('saveEditTimeLog:')){TimeUI.saveEditLog(action.split(':')[1]);return true;}
+    if(action==='deleteTimeLog'){TimeUI.deleteLog(id);return true;}
     if(action==='timer'){TimeUI.timerPanel(id);return true;}
     if(action&&action.startsWith('startTimer:')){TimeUI.startTimer(action.split(':')[1]);return true;}
     if(action==='pauseTimer'){TimeUI.pauseTimer();return true;}
