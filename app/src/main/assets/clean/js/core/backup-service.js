@@ -28,7 +28,11 @@ window.BackupService=(function(){
       bills:(data.bills||[]).length,
       debts:(data.debts||[]).length,
       tasks:(data.tasks||[]).length,
-      projects:(data.projects||[]).length
+      projects:(data.projects||[]).length,
+      categories:(data.categories||[]).length,
+      budgets:(data.budgets||[]).length,
+      goals:(data.goals||[]).length,
+      cards:(data.cards||[]).length
     };
   }
   return {exportJson,download,importJson,summary};
