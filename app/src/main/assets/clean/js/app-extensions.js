@@ -29,6 +29,10 @@ window.AppExtensions=(function(){
     if(action==='editDebt'){DebtUI.editDebtForm(id);return true;}
     if(action&&action.startsWith('saveEditDebt:')){DebtUI.saveEditDebt(action.split(':')[1]);return true;}
     if(action==='deleteDebt'){DebtUI.deleteDebt(id);return true;}
+    if(action==='deleteDebtChoice'){DebtUI.deleteDebtChoice(id);return true;}
+    if(action&&action.startsWith('confirmDeleteDebt:')){DebtUI.confirmDeleteDebt(action.split(':')[1]);return true;}
+    if(action==='payoffDebt'){DebtUI.payoffDebtForm(id);return true;}
+    if(action&&action.startsWith('saveDebtPayoff:')){DebtUI.saveDebtPayoff(action.split(':')[1]);return true;}
     if(action==='archiveDebt'){DebtUI.archiveDebt(id);return true;}
     if(action==='showArchivedDebts'){DebtUI.showArchivedDebts();return true;}
     if(action==='correctDebt'){DebtUI.correctDebtForm(id);return true;}
