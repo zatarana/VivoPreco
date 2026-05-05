@@ -16,6 +16,7 @@ window.App=(function(){
       if(action==='showWallets')return FinanceUI.showWallets(data());
       if(action==='newWallet')return FinanceUI.newWalletForm();
       if(action==='saveWallet')return FinanceUI.saveWallet();
+      if(action==='setDefaultWallet')return FinanceUI.setDefaultWallet(id);
       if(action==='showBills')return FinanceUI.showBills(data());
       if(action==='newDebt')return DebtUI.newDebtForm();
       if(action==='saveDebt')return DebtUI.saveDebt();
