@@ -51,19 +51,29 @@ window.AppExtensions=(function(){
     if(action==='showCategories'){PlanningUI.showCategories(data());return true;}
     if(action==='newCategory'){PlanningUI.newCategoryForm();return true;}
     if(action==='saveCategory'){PlanningUI.saveCategory();return true;}
+    if(action==='editCategory'){PlanningUI.editCategoryForm(id);return true;}
+    if(action&&action.startsWith('saveEditCategory:')){PlanningUI.saveEditCategory(action.split(':')[1]);return true;}
     if(action==='deleteCategory'){PlanningUI.deleteCategory(id);return true;}
     if(action==='showBudgets'){PlanningUI.showBudgets(data());return true;}
     if(action==='newBudget'){PlanningUI.newBudgetForm();return true;}
     if(action==='saveBudget'){PlanningUI.saveBudget();return true;}
+    if(action==='editBudget'){PlanningUI.editBudgetForm(id);return true;}
+    if(action&&action.startsWith('saveEditBudget:')){PlanningUI.saveEditBudget(action.split(':')[1]);return true;}
+    if(action==='deleteBudget'){PlanningUI.deleteBudget(id);return true;}
+    if(action==='copyBudgets'){PlanningUI.copyBudgets();return true;}
     if(action==='showGoals'){PlanningUI.showGoals(data());return true;}
     if(action==='newGoal'){PlanningUI.newGoalForm();return true;}
     if(action==='saveGoal'){PlanningUI.saveGoal();return true;}
+    if(action==='editGoal'){PlanningUI.editGoalForm(id);return true;}
+    if(action&&action.startsWith('saveEditGoal:')){PlanningUI.saveEditGoal(action.split(':')[1]);return true;}
     if(action==='contributeGoal'){PlanningUI.contributeGoalForm(id);return true;}
     if(action&&action.startsWith('saveGoalContribution:')){PlanningUI.saveGoalContribution(action.split(':')[1]);return true;}
     if(action==='deleteGoal'){PlanningUI.deleteGoal(id);return true;}
     if(action==='showCards'){PlanningUI.showCards(data());return true;}
     if(action==='newCard'){PlanningUI.newCardForm();return true;}
     if(action==='saveCard'){PlanningUI.saveCard();return true;}
+    if(action==='editCard'){PlanningUI.editCardForm(id);return true;}
+    if(action&&action.startsWith('saveEditCard:')){PlanningUI.saveEditCard(action.split(':')[1]);return true;}
     if(action==='deleteCard'){PlanningUI.deleteCard(id);return true;}
     return false;
   }
