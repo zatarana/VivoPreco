@@ -3,6 +3,21 @@ const vm = require('vm');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
+
+function listJsFiles(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) return listJsFiles(full);
+    return entry.isFile() && entry.name.endsWith('.js') ? [full] : [];
+  });
+}
+
+for (const file of listJsFiles(path.join(root, 'app/src/main/assets/clean/js'))) {
+  const relative = path.relative(root, file);
+  new vm.Script(fs.readFileSync(file, 'utf8'), { filename: relative });
+  console.log(`PASS: sintaxe JS ${relative}`);
+}
+
 const files = [
   'app/src/main/assets/clean/js/core/models.js',
   'app/src/main/assets/clean/js/core/validators.js',
