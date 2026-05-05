@@ -1,5 +1,9 @@
 window.StorageService=(function(){
   const KEY='vivopreco_clean_v1';
+  function hasNative(){return !!(window.VivoStorage&&typeof window.VivoStorage.getItem==='function');}
+  function nativeGet(key){try{return hasNative()?window.VivoStorage.getItem(key):null;}catch(e){console.warn('Native get falhou',e);return null;}}
+  function nativeSet(key,value){try{if(hasNative())window.VivoStorage.setItem(key,value);}catch(e){console.warn('Native set falhou',e);}}
+  function nativeRemove(key){try{if(hasNative())window.VivoStorage.removeItem(key);}catch(e){console.warn('Native remove falhou',e);}}
   function seed(){return {version:1,preferences:{defaultWalletId:'wallet_main'},wallets:[Models.wallet()],transactions:[Models.transaction({type:'receita',value:1500,description:'Entrada inicial',category:'Receita'})],bills:[],debts:[],categories:[{id:'cat_food',name:'Alimentação',type:'despesa'},{id:'cat_home',name:'Moradia',type:'despesa'},{id:'cat_debt',name:'Dívidas',type:'despesa'},{id:'cat_income',name:'Receita',type:'receita'},{id:'cat_general',name:'Geral',type:'ambos'}],budgets:[],goals:[],cards:[],timeLogs:[],activeTimer:null,projects:[{id:'project_inbox',name:'Inbox',color:'#2563eb',sections:['Entrada'],view:'list',kind:'comum',weeklyTargetMinutes:0},{id:'project_personal',name:'Pessoal',color:'#16a34a',sections:['Geral','Rotina'],view:'list',kind:'comum',weeklyTargetMinutes:0},{id:'project_finance',name:'Finanças',color:'#d97706',sections:['A Fazer','Em andamento','Concluído'],view:'board',kind:'comum',weeklyTargetMinutes:0},{id:'project_study',name:'Estudos',color:'#7c3aed',sections:['Matérias','Questões','Revisão'],view:'list',kind:'estudos',weeklyTargetMinutes:1200}],tasks:[Models.task({title:'Revisar orçamento do mês',projectId:'project_finance',section:'A Fazer',dueDate:Models.today(),priority:'P1',labels:['finanças']}),Models.task({title:'Estudar Direito Constitucional',projectId:'project_study',section:'Matérias',dueDate:Models.today(),priority:'P1',labels:['estudos'],recurrence:'diaria',seriesId:'series_direito_constitucional',estimatedMinutes:50})]};}
   function normalize(data){
     data.version=data.version||1;
@@ -22,9 +26,9 @@ window.StorageService=(function(){
     data.tasks=data.tasks.map(t=>Object.assign({recurrence:'nenhuma',seriesId:null,estimatedMinutes:0},t));
     return data;
   }
-  function read(){try{const raw=localStorage.getItem(KEY);return raw?normalize(JSON.parse(raw)):write(seed());}catch(e){console.error(e);return write(seed());}}
-  function write(data){const normalized=normalize(data);localStorage.setItem(KEY,JSON.stringify(normalized));return normalized;}
+  function read(){try{const nativeRaw=nativeGet(KEY);const localRaw=localStorage.getItem(KEY);const raw=nativeRaw||localRaw;if(raw){if(nativeRaw&&!localRaw)localStorage.setItem(KEY,nativeRaw);if(localRaw&&!nativeRaw)nativeSet(KEY,localRaw);return normalize(JSON.parse(raw));}return write(seed());}catch(e){console.error(e);return write(seed());}}
+  function write(data){const normalized=normalize(data);const raw=JSON.stringify(normalized);localStorage.setItem(KEY,raw);nativeSet(KEY,raw);return normalized;}
   function update(mutator){const data=read();mutator(data);write(data);return data;}
-  function reset(){return write(seed());}
-  return {read,write,update,reset,KEY};
+  function reset(){nativeRemove(KEY);return write(seed());}
+  return {read,write,update,reset,KEY,hasNative};
 })();
