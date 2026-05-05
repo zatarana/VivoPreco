@@ -13,14 +13,16 @@ window.DebtEngine=(function(){
   function addMonths(date,months){const d=new Date((date||Models.today())+'T00:00:00');d.setMonth(d.getMonth()+months);return d.toISOString().slice(0,10);}
   function event(type,value,note,effect){return {id:Models.uid('debt_event'),date:Models.today(),type,value:n(value),note:note||'',effect:effect||'neutral'};}
   function addDebt(data,input){
+    const txCountBefore=(data.transactions||[]).length;
     const parts=Math.max(0,parseInt(input.installments||0,10));
     const installmentValue=n(input.installmentValue||0);
     const parcelTotal=parts>0&&installmentValue>0?r(parts*installmentValue):0;
     const original=Validators.nonNegativeNumber(input.original||parcelTotal||0,'Valor original');
     const balance=Validators.nonNegativeNumber(input.balance||parcelTotal||original,'Saldo da dívida');
-    const d=Models.debt(Object.assign({},input,{original,balance,minPayment:n(input.minPayment)||installmentValue||0,events:[event('Cadastro',balance||original,'Dívida registrada sem transação.','neutral')]}));
+    const d=Models.debt(Object.assign({},input,{original,balance,minPayment:n(input.minPayment)||installmentValue||0,events:[event('Cadastro',balance||original,'Dívida cadastrada. Nenhuma transação foi criada.','neutral')]}));
     data.debts.push(d);
-    if(parts>0&&installmentValue>0){createInstallments(data,d.id,parts,installmentValue,input.firstDue||Models.today(),input.walletId);d.status='Parcelada';d.events.push(event('Parcelamento inicial',parcelTotal,`${parts} parcela(s) de ${r(installmentValue)} criadas no cadastro.`,'neutral'));}
+    if(parts>0&&installmentValue>0){createInstallments(data,d.id,parts,installmentValue,input.firstDue||Models.today(),input.walletId);d.status='Parcelada';d.events.push(event('Parcelamento inicial',parcelTotal,`${parts} parcela(s) de ${r(installmentValue)} criadas como contas futuras. Nenhuma transação foi criada no cadastro.`,'neutral'));}
+    if((data.transactions||[]).length!==txCountBefore)throw new Error('Regra violada: cadastrar dívida não pode criar transação.');
     return d;
   }
   function createInstallments(data,debtId,parts,installmentValue,firstDue,walletId){const d=debtById(data,debtId);if(!d)throw new Error('Dívida não encontrada');const count=Math.max(1,parseInt(parts||1,10));const value=Validators.positiveNumber(installmentValue,'Valor da parcela');const created=[];for(let i=1;i<=count;i++){created.push(FinanceEngine.addBill(data,{name:`Parcela ${i}/${count} - ${d.name}`,flow:'A_PAGAR',expected:value,dueDate:addMonths(firstDue||Models.today(),i-1),category:'Dívidas',walletId:defaultWalletId(data,walletId),debtId:d.id}));}return created;}
