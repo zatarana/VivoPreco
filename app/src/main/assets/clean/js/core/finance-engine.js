@@ -25,12 +25,40 @@ window.FinanceEngine=(function(){
   function receivable(data){return r(bills(data).filter(b=>b.flow==='A_RECEBER').reduce((s,b)=>s+billRemaining(b),0));}
   function ensureWallet(data,walletId){const id=walletId||defaultWalletId(data);if(!wallets(data).find(w=>w.id===id))data.wallets.push(Models.wallet({id:id,name:id==='wallet_main'?'Principal':id}));return id;}
   function defaultWalletId(data){return (data.preferences&&data.preferences.defaultWalletId)||'wallet_main';}
+  function transactionById(data,id){return transactions(data).find(t=>t.id===id);}
   function addTransaction(data,input){
     const type=Validators.oneOf(input.type||'despesa',['despesa','receita'],'Tipo da transação');
     const value=Validators.positiveNumber(input.value,'Valor da transação');
     const walletId=ensureWallet(data,input.walletId);
     const tx=Models.transaction({type,value,walletId,description:Validators.safeText(input.description||'Sem descrição',160),category:Validators.safeText(input.category||'Geral',80),date:input.date||Models.today(),billId:input.billId||null,debtId:input.debtId||null});
     data.transactions.push(tx);return tx;
+  }
+  function updateTransaction(data,txId,input){
+    const tx=transactionById(data,txId);if(!tx)throw new Error('Transação não encontrada.');
+    if(tx.billId||tx.debtId)throw new Error('Transação vinculada a conta ou dívida não deve ser editada diretamente. Edite a origem do lançamento.');
+    if(tx.type==='transferencia'){
+      if(input.value!==undefined)tx.value=Validators.positiveNumber(input.value,'Valor da transferência');
+      if(input.fromWalletId!==undefined)tx.fromWalletId=ensureWallet(data,input.fromWalletId);
+      if(input.toWalletId!==undefined)tx.toWalletId=ensureWallet(data,input.toWalletId);
+      if(tx.fromWalletId===tx.toWalletId)throw new Error('Carteira de origem e destino devem ser diferentes.');
+      if(input.description!==undefined)tx.description=Validators.safeText(input.description||'Transferência',160);
+      if(input.date!==undefined)tx.date=input.date||tx.date;
+      tx.walletId=tx.fromWalletId;
+      return tx;
+    }
+    if(input.type!==undefined)tx.type=Validators.oneOf(input.type,['despesa','receita'],'Tipo da transação');
+    if(input.value!==undefined)tx.value=Validators.positiveNumber(input.value,'Valor da transação');
+    if(input.walletId!==undefined)tx.walletId=ensureWallet(data,input.walletId);
+    if(input.description!==undefined)tx.description=Validators.safeText(input.description||'Sem descrição',160);
+    if(input.category!==undefined)tx.category=Validators.safeText(input.category||'Geral',80);
+    if(input.date!==undefined)tx.date=input.date||tx.date;
+    return tx;
+  }
+  function deleteTransaction(data,txId){
+    const idx=transactions(data).findIndex(t=>t.id===txId);if(idx<0)throw new Error('Transação não encontrada.');
+    const tx=data.transactions[idx];
+    if(tx.billId||tx.debtId)throw new Error('Transação vinculada a conta ou dívida não deve ser excluída diretamente para não quebrar o histórico.');
+    data.transactions.splice(idx,1);return tx;
   }
   function addTransfer(data,input){
     const value=Validators.positiveNumber(input.value,'Valor da transferência');
@@ -68,5 +96,5 @@ window.FinanceEngine=(function(){
     return {bill:b,transaction:tx,amount};
   }
   function projectedBalance(data,minDebtPayment){return r(totalWalletBalance(data)+receivable(data)-payable(data)-n(minDebtPayment));}
-  return {income,expense,walletBalance,totalWalletBalance,billSettled,billRemaining,payable,receivable,addTransaction,addTransfer,addBill,updateBill,deleteBill,settleBill,projectedBalance,defaultWalletId};
+  return {income,expense,walletBalance,totalWalletBalance,billSettled,billRemaining,payable,receivable,transactionById,addTransaction,updateTransaction,deleteTransaction,addTransfer,addBill,updateBill,deleteBill,settleBill,projectedBalance,defaultWalletId};
 })();
