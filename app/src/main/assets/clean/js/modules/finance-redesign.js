@@ -1,0 +1,16 @@
+window.FinanceRedesign=(function(){
+  function walletName(data,id){return ((data.wallets||[]).find(w=>w.id===id)||{}).name||'Conta';}
+  function walletIcon(type){if(type==='poupança')return '💰';if(type==='investimento')return '🐷';if(type==='carteira')return '👛';return '🏦';}
+  function txItem(data,t){return `<div class="mf-row ${t.type==='receita'?'income':'expense'}"><div class="mf-dot"></div><div class="mf-main"><b>${Dom.esc(t.description||'Transação')}</b><span>${Dom.esc(walletName(data,t.walletId))} • ${Dom.date(t.date)}</span></div><strong>${t.type==='receita'?'+':'-'}${Dom.money(t.value)}</strong></div>`;}
+  function walletItem(data,w){const balance=FinanceEngine.walletBalance(data,w.id);return `<div class="mf-account"><div class="mf-account-icon">${walletIcon(w.type)}</div><div class="mf-main"><b>${Dom.esc(w.name)}</b><span>${Dom.esc(w.type)}${w.id===((data.preferences||{}).defaultWalletId)?' • padrão':''}</span></div><strong class="${balance<0?'negative':'positive'}">${Dom.money(balance)}</strong><button class="mf-kebab" data-action="editWallet" data-id="${Dom.esc(w.id)}">⋮</button></div>`;}
+  function render(data){
+    const tx=(data.transactions||[]).slice().reverse().slice(0,4);
+    const total=FinanceEngine.totalWalletBalance(data);
+    const cardsPayable=(data.bills||[]).filter(b=>b.category==='Cartão'&&FinanceEngine.billRemaining(b)>0).reduce((s,b)=>s+FinanceEngine.billRemaining(b),0);
+    Dom.setHeader('Finanças','Resumo mensal, contas e lançamentos.');
+    Dom.render(`<section class="mf-hero"><div class="mf-month"><button class="mf-icon-btn" data-action="monthlyFinance:${FinanceMonthlyUI.shiftMonth(FinanceMonthlyUI.currentMonth(),-1)}">‹</button><strong>${new Date().toLocaleDateString('pt-BR',{month:'long'}).replace(/^./,c=>c.toUpperCase())}</strong><button class="mf-icon-btn" data-action="monthlyFinance:${FinanceMonthlyUI.shiftMonth(FinanceMonthlyUI.currentMonth(),1)}">›</button></div><div class="mf-balance"><small>Saldo real</small><strong>${Dom.money(total)}</strong></div></section><div class="mf-search" data-action="monthlyFinance">Pesquisar no DiasOrganize</div><section class="mf-card"><h3>Visão geral</h3><div class="mf-list"><div class="mf-summary-line income"><span>＋ Receitas</span><b>${Dom.money(FinanceEngine.income(data))}</b></div><div class="mf-summary-line expense"><span>− Despesas</span><b>${Dom.money(FinanceEngine.expense(data))}</b></div><div class="mf-summary-line transfer"><span>↕ Balanço transferências</span><b>${Dom.money(0)}</b></div><div class="mf-summary-line card"><span>▣ Cartões de crédito<br><small>Total faturas a pagar</small></span><b>${Dom.money(cardsPayable)}</b></div></div></section><section class="mf-card"><div class="mf-card-title"><h3>Contas</h3><button class="mf-open" data-action="showWallets">↗</button></div><div class="mf-list">${(data.wallets||[]).map(w=>walletItem(data,w)).join('')}<div class="mf-total"><span>Total</span><b>${Dom.money(total)}</b></div></div></section><section class="mf-card"><div class="mf-card-title"><h3>Últimas transações</h3><button class="mf-open" data-action="newTransaction">＋</button></div>${tx.length?tx.map(t=>txItem(data,t)).join(''):Components.empty('Nenhuma transação.')}</section>`);
+  }
+  function install(){if(window.FinanceUI)FinanceUI.render=render;}
+  setTimeout(install,0);
+  return {install,render};
+})();
