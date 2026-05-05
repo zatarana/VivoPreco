@@ -11,6 +11,7 @@ const files = [
   'app/src/main/assets/clean/js/core/debt-engine.js',
   'app/src/main/assets/clean/js/core/integration-engine.js',
   'app/src/main/assets/clean/js/core/task-engine.js',
+  'app/src/main/assets/clean/js/core/time-engine.js',
   'app/src/main/assets/clean/js/core/planning-engine.js',
   'app/src/main/assets/clean/js/core/audit.js'
 ];
@@ -48,8 +49,13 @@ const data = {
   transactions: [],
   bills: [],
   debts: [],
-  projects: [{ id: 'project_inbox', name: 'Inbox', sections: ['Entrada'], view: 'list' }],
-  tasks: []
+  projects: [
+    { id: 'project_inbox', name: 'Inbox', sections: ['Entrada'], view: 'list', kind: 'comum', weeklyTargetMinutes: 0 },
+    { id: 'project_study', name: 'Estudos', sections: ['Matérias'], view: 'list', kind: 'estudos', weeklyTargetMinutes: 600 }
+  ],
+  tasks: [],
+  timeLogs: [],
+  activeTimer: null
 };
 
 context.FinanceEngine.addTransaction(data, { type: 'receita', value: 1000, description: 'Salário', category: 'Receita' });
@@ -89,6 +95,18 @@ context.TaskEngine.addComment(data, task.id, 'Comentário');
 context.TaskEngine.complete(data, task.id);
 assert('tarefa concluída', context.TaskEngine.completedTasks(data).length === 1);
 assert('subtarefa criada', context.TaskEngine.subtasks(data, task.id).length === 1);
+
+const studyTask = context.TaskEngine.addTask(data, { title: 'Estudar Português', projectId: 'project_study', recurrence: 'diaria', seriesId: 'series_estudar_portugues', estimatedMinutes: 45 });
+context.TimeEngine.addManualLog(data, studyTask.id, 45, 'Sessão manual', context.Models.today());
+assert('tempo manual soma na tarefa', context.TimeEngine.taskTotal(data, studyTask.id) === 45);
+assert('tempo manual soma no projeto', context.TimeEngine.projectTotal(data, 'project_study') === 45);
+assert('tempo manual soma na recorrência', context.TimeEngine.seriesTotal(data, 'series_estudar_portugues') === 45);
+context.TimeEngine.startTimer(data, studyTask.id);
+data.activeTimer.accumulatedSeconds = 120;
+data.activeTimer.status = 'paused';
+context.TimeEngine.finishTimer(data, 'Timer simulado');
+assert('timer finalizado cria sessão mínima', context.TimeEngine.logsForTask(data, studyTask.id).length === 2);
+assert('relatório de projeto computa total', context.TimeEngine.projectReport(data, 'project_study').total >= 46);
 
 context.PlanningEngine.ensure(data);
 const category = context.PlanningEngine.addCategory(data, { name: 'Estudos', type: 'despesa' });
