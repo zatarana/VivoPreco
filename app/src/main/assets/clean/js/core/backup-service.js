@@ -1,14 +1,14 @@
 window.BackupService=(function(){
   function exportJson(){
     const data=StorageService.read();
-    return JSON.stringify({app:'VivoPreco',format:'clean-core-backup',version:1,createdAt:new Date().toISOString(),data:data},null,2);
+    return JSON.stringify({app:'DiasOrganize',format:'diasorganize-clean-backup',version:1,createdAt:new Date().toISOString(),data:data},null,2);
   }
   function download(){
     const blob=new Blob([exportJson()],{type:'application/json;charset=utf-8'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
     a.href=url;
-    a.download='vivopreco-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    a.download='diasorganize-backup-'+new Date().toISOString().slice(0,10)+'.json';
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -33,7 +33,8 @@ window.BackupService=(function(){
       categories:(data.categories||[]).length,
       budgets:(data.budgets||[]).length,
       goals:(data.goals||[]).length,
-      cards:(data.cards||[]).length
+      cards:(data.cards||[]).length,
+      cardPurchases:(data.cardPurchases||[]).length
     };
   }
   return {exportJson,download,importJson,summary};
