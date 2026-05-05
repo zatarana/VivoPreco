@@ -11,6 +11,7 @@ const files = [
   'app/src/main/assets/clean/js/core/debt-engine.js',
   'app/src/main/assets/clean/js/core/integration-engine.js',
   'app/src/main/assets/clean/js/core/task-engine.js',
+  'app/src/main/assets/clean/js/core/planning-engine.js',
   'app/src/main/assets/clean/js/core/audit.js'
 ];
 
@@ -51,8 +52,8 @@ const data = {
   tasks: []
 };
 
-context.FinanceEngine.addTransaction(data, { type: 'receita', value: 1000, description: 'Salário' });
-context.FinanceEngine.addTransaction(data, { type: 'despesa', value: 250, description: 'Mercado' });
+context.FinanceEngine.addTransaction(data, { type: 'receita', value: 1000, description: 'Salário', category: 'Receita' });
+context.FinanceEngine.addTransaction(data, { type: 'despesa', value: 250, description: 'Mercado', category: 'Alimentação' });
 assert('saldo da carteira principal', context.FinanceEngine.walletBalance(data, 'wallet_main') === 750);
 assert('saldo total aceita carteira negativa', context.FinanceEngine.totalWalletBalance(data) === 650);
 
@@ -88,6 +89,17 @@ context.TaskEngine.addComment(data, task.id, 'Comentário');
 context.TaskEngine.complete(data, task.id);
 assert('tarefa concluída', context.TaskEngine.completedTasks(data).length === 1);
 assert('subtarefa criada', context.TaskEngine.subtasks(data, task.id).length === 1);
+
+context.PlanningEngine.ensure(data);
+const category = context.PlanningEngine.addCategory(data, { name: 'Estudos', type: 'despesa' });
+assert('categoria criada', category.name === 'Estudos');
+const budget = context.PlanningEngine.addBudget(data, { category: 'Alimentação', month: new Date().toISOString().slice(0, 7), limit: 500 });
+assert('orçamento calcula gasto por categoria', context.PlanningEngine.budgetSpent(data, budget) === 250);
+const goal = context.PlanningEngine.addGoal(data, { name: 'Reserva', target: 1000, saved: 200 });
+context.PlanningEngine.contributeGoal(data, goal.id, 800);
+assert('meta conclui ao atingir alvo', goal.status === 'Concluída');
+const card = context.PlanningEngine.addCard(data, { name: 'Cartão Teste', limit: 1500, closingDay: 5, dueDay: 12, walletId: 'wallet_main' });
+assert('cartão criado com limite', card.limit === 1500);
 
 const audit = context.AuditService.run(data);
 assert('auditoria sem erros críticos', audit.ok === true);
