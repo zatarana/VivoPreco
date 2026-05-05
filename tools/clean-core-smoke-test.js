@@ -9,6 +9,7 @@ const files = [
   'app/src/main/assets/clean/js/core/storage.js',
   'app/src/main/assets/clean/js/core/finance-engine.js',
   'app/src/main/assets/clean/js/core/debt-engine.js',
+  'app/src/main/assets/clean/js/core/integration-engine.js',
   'app/src/main/assets/clean/js/core/task-engine.js',
   'app/src/main/assets/clean/js/core/audit.js'
 ];
@@ -29,6 +30,7 @@ vm.createContext(context);
 for (const f of files) {
   vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), context, { filename: f });
 }
+context.IntegrationEngine.install();
 
 function assert(name, condition) {
   if (!condition) throw new Error(`FAIL: ${name}`);
@@ -37,7 +39,11 @@ function assert(name, condition) {
 
 const data = {
   version: 1,
-  wallets: [context.Models.wallet()],
+  preferences: { defaultWalletId: 'wallet_main' },
+  wallets: [
+    context.Models.wallet(),
+    context.Models.wallet({ id: 'wallet_reserva', name: 'Reserva', initialBalance: -100 })
+  ],
   transactions: [],
   bills: [],
   debts: [],
@@ -47,11 +53,19 @@ const data = {
 
 context.FinanceEngine.addTransaction(data, { type: 'receita', value: 1000, description: 'Salário' });
 context.FinanceEngine.addTransaction(data, { type: 'despesa', value: 250, description: 'Mercado' });
-assert('saldo da carteira', context.FinanceEngine.totalWalletBalance(data) === 750);
+assert('saldo da carteira principal', context.FinanceEngine.walletBalance(data, 'wallet_main') === 750);
+assert('saldo total aceita carteira negativa', context.FinanceEngine.totalWalletBalance(data) === 650);
+
+context.FinanceEngine.addTransfer(data, { value: 100, fromWalletId: 'wallet_main', toWalletId: 'wallet_reserva' });
+assert('transferência reduz origem', context.FinanceEngine.walletBalance(data, 'wallet_main') === 650);
+assert('transferência aumenta destino', context.FinanceEngine.walletBalance(data, 'wallet_reserva') === 0);
+assert('transferência não altera receita/despesa', context.FinanceEngine.expense(data) === 250 && context.FinanceEngine.income(data) === 1000);
 
 const bill = context.FinanceEngine.addBill(data, { name: 'Energia', flow: 'A_PAGAR', expected: 200 });
 assert('conta pendente', context.FinanceEngine.payable(data) === 200);
-context.FinanceEngine.settleBill(data, bill.id, 200);
+context.FinanceEngine.settleBill(data, bill.id, 80);
+assert('pagamento parcial reduz pendente', context.FinanceEngine.billRemaining(bill) === 120);
+context.FinanceEngine.settleBill(data, bill.id, 120);
 assert('conta paga zera pendente', context.FinanceEngine.payable(data) === 0);
 assert('conta paga gera despesa', context.FinanceEngine.expense(data) === 450);
 
@@ -61,9 +75,19 @@ context.DebtEngine.pay(data, debt.id, 300, 300);
 assert('pagar dívida cria despesa', context.FinanceEngine.expense(data) === 750);
 assert('pagar dívida reduz saldo vivo', context.DebtEngine.total(data) === 700);
 
+const debt2 = context.DebtEngine.addDebt(data, { name: 'Acordo', original: 600, balance: 600 });
+const renegotiation = context.DebtEngine.renegotiate(data, debt2.id, 500, 5, context.Models.today());
+assert('renegociação cria parcelas', renegotiation.bills.length === 5);
+const firstDebtBill = renegotiation.bills[0];
+context.FinanceEngine.settleBill(data, firstDebtBill.id, 100);
+assert('pagar parcela vinculada reduz dívida', debt2.balance === 400);
+
 const task = context.TaskEngine.addTask(data, { title: 'Teste', projectId: 'project_inbox' });
+context.TaskEngine.addSubtask(data, task.id, { title: 'Sub', projectId: 'project_inbox' });
+context.TaskEngine.addComment(data, task.id, 'Comentário');
 context.TaskEngine.complete(data, task.id);
 assert('tarefa concluída', context.TaskEngine.completedTasks(data).length === 1);
+assert('subtarefa criada', context.TaskEngine.subtasks(data, task.id).length === 1);
 
 const audit = context.AuditService.run(data);
 assert('auditoria sem erros críticos', audit.ok === true);
