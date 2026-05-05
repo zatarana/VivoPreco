@@ -3,6 +3,14 @@ window.AppExtensions=(function(){
   function run(action,id){
     if(!action)return false;
 
+    if(action==='editProject'){TasksUI.editProjectForm(id);return true;}
+    if(action&&action.startsWith('saveEditProject:')){TasksUI.saveEditProject(action.split(':')[1]);return true;}
+    if(action==='deleteProject'){TasksUI.deleteProjectForm(id);return true;}
+    if(action&&action.startsWith('confirmDeleteProject:')){TasksUI.confirmDeleteProject(action.split(':')[1]);return true;}
+    if(action&&action.startsWith('completeTaskNoTime:')){TasksUI.completeTaskNoTime(action.split(':')[1]);return true;}
+    if(action&&action.startsWith('completeTaskWithTime:')){TasksUI.completeTaskWithTime(action.split(':')[1]);return true;}
+    if(action&&action.startsWith('completeTaskWithQuickTime:')){const parts=action.split(':');TasksUI.completeTaskWithQuickTime(parts[1],parts[2]);return true;}
+
     if(action==='addTime'){TimeUI.addTimeForm(id);return true;}
     if(action&&action.startsWith('saveManualTime:')){TimeUI.saveManualTime(action.split(':')[1]);return true;}
     if(action==='timer'){TimeUI.timerPanel(id);return true;}
