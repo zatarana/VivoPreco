@@ -16,9 +16,13 @@ window.AuditService=(function(){
     });
 
     (data.transactions||[]).forEach(t=>{
-      if(!['receita','despesa'].includes(t.type))issues.push(error(`Transação ${t.id} tem tipo inválido.`));
+      if(!['receita','despesa','transferencia'].includes(t.type))issues.push(error(`Transação ${t.id} tem tipo inválido.`));
       if(Number(t.value||0)<=0)issues.push(error(`Transação ${t.id} tem valor inválido.`));
-      if(!wallets.has(t.walletId))issues.push(warn(`Transação ${t.id} aponta para carteira inexistente.`));
+      if(t.type==='transferencia'){
+        if(!wallets.has(t.fromWalletId))issues.push(warn(`Transferência ${t.id} tem origem inexistente.`));
+        if(!wallets.has(t.toWalletId))issues.push(warn(`Transferência ${t.id} tem destino inexistente.`));
+        if(t.fromWalletId===t.toWalletId)issues.push(error(`Transferência ${t.id} usa a mesma carteira na origem e destino.`));
+      }else if(!wallets.has(t.walletId))issues.push(warn(`Transação ${t.id} aponta para carteira inexistente.`));
       if(t.billId&&!bills.has(t.billId))issues.push(warn(`Transação ${t.id} aponta para conta inexistente.`));
       if(t.debtId&&!debts.has(t.debtId))issues.push(warn(`Transação ${t.id} aponta para dívida inexistente.`));
     });
