@@ -15,6 +15,11 @@ window.AppExtensions=(function(){
     if(action==='projectTime'){TimeUI.projectTime(id);return true;}
     if(action&&action.startsWith('projectTimeRange:')){const parts=action.split(':');TimeUI.projectTime(parts[1],parts[2]);return true;}
 
+    if(action==='editDebt'){DebtUI.editDebtForm(id);return true;}
+    if(action&&action.startsWith('saveEditDebt:')){DebtUI.saveEditDebt(action.split(':')[1]);return true;}
+    if(action==='deleteDebt'){DebtUI.deleteDebt(id);return true;}
+    if(action==='archiveDebt'){DebtUI.archiveDebt(id);return true;}
+    if(action==='showArchivedDebts'){DebtUI.showArchivedDebts();return true;}
     if(action==='correctDebt'){DebtUI.correctDebtForm(id);return true;}
     if(action&&action.startsWith('saveCorrectDebt:')){DebtUI.saveCorrectDebt(action.split(':')[1]);return true;}
     if(action==='contestDebt'){DebtUI.contestDebt(id);return true;}
