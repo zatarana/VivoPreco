@@ -9,7 +9,8 @@ window.App=(function(){
   function handleAction(action,id){
     try{
       let handled=true;
-      if(action==='newTransaction')FinanceUI.newTransactionForm();
+      if(routes[action])go(action);
+      else if(action==='newTransaction')FinanceUI.newTransactionForm();
       else if(action==='saveTransaction')FinanceUI.saveTransaction(data());
       else if(action==='newTransfer')FinanceUI.newTransferForm();
       else if(action==='saveTransfer')FinanceUI.saveTransfer();
