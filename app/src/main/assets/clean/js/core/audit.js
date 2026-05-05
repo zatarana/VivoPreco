@@ -6,6 +6,9 @@ window.AuditService=(function(){
     const debts=new Map((data.debts||[]).map(d=>[d.id,d]));
     const projects=new Set((data.projects||[]).map(p=>p.id));
 
+    if(!data.preferences||!data.preferences.defaultWalletId)issues.push(warn('Nenhuma carteira padrão definida.'));
+    if(data.preferences&&data.preferences.defaultWalletId&&!wallets.has(data.preferences.defaultWalletId))issues.push(error('Carteira padrão aponta para uma carteira inexistente.'));
+
     (data.wallets||[]).forEach(w=>{
       if(!w.id)issues.push(error('Carteira sem ID.'));
       if(!w.name)issues.push(error('Carteira sem nome.'));
