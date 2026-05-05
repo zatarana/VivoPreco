@@ -88,11 +88,6 @@ window.AppExtensions=(function(){
   }
   function install(){
     if(window.IntegrationEngine)IntegrationEngine.install();
-    document.addEventListener('click',function(e){
-      const a=e.target.closest('[data-action]');
-      if(!a||a.dataset.handled==='1')return;
-      try{if(run(a.dataset.action,a.dataset.id)){a.dataset.handled='1';}}catch(err){console.error(err);Dom.toast(err.message||'Não foi possível concluir a ação.');}
-    });
   }
   setTimeout(install,0);
   return {run,install};
