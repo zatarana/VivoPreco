@@ -3,6 +3,8 @@ window.AppExtensions=(function(){
   function run(action,id){
     if(!action)return false;
 
+    if(action==='showDebtInstallments'){UXRefinements.showDebtInstallments(id);return true;}
+
     if(action==='editProject'){TasksUI.editProjectForm(id);return true;}
     if(action&&action.startsWith('saveEditProject:')){TasksUI.saveEditProject(action.split(':')[1]);return true;}
     if(action==='deleteProject'){TasksUI.deleteProjectForm(id);return true;}
