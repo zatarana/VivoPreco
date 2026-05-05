@@ -1,0 +1,15 @@
+window.DebtEngine=(function(){
+  const n=v=>Number(v||0);
+  const r=v=>Math.round((n(v)+Number.EPSILON)*100)/100;
+  function debts(data){return data.debts||[];}
+  function openDebts(data){return debts(data).filter(d=>d.status!=='Quitada');}
+  function total(data){return r(openDebts(data).reduce((s,d)=>s+n(d.balance),0));}
+  function minPayment(data){return r(openDebts(data).filter(d=>!linkedBills(data,d.id).length).reduce((s,d)=>s+n(d.minPayment),0));}
+  function linkedBills(data,debtId){return (data.bills||[]).filter(b=>b.debtId===debtId&&b.status==='PENDENTE');}
+  function addDebt(data,input){const d=Models.debt(Object.assign({},input,{events:[event('Cadastro',input.balance||input.original||0,'Dívida registrada sem transação.','neutral')]}));data.debts.push(d);return d;}
+  function event(type,value,note,effect){return {id:Models.uid('debt_event'),date:Models.today(),type,value:n(value),note:note||'',effect:effect||'neutral'};}
+  function pay(data,debtId,value,reduceValue,date){const d=debts(data).find(x=>x.id===debtId);if(!d)throw new Error('Dívida não encontrada');const amount=n(value);const reduction=n(reduceValue||value);if(amount<=0||reduction<=0)throw new Error('Valor inválido');d.paid=r(n(d.paid)+amount);d.balance=Math.max(0,r(n(d.balance)-reduction));if(d.balance<=0)d.status='Quitada';else d.status='Em pagamento';d.events.push(event('Pagamento',amount,'Pagamento real; gerou despesa.', 'transaction'));const tx=FinanceEngine.addTransaction(data,{type:'despesa',value:amount,description:'Pagamento de dívida: '+d.name,category:'Dívidas',walletId:'wallet_main',date:date||Models.today(),debtId:d.id});return {debt:d,transaction:tx};}
+  function adjust(data,debtId,type,value,note){const d=debts(data).find(x=>x.id===debtId);if(!d)throw new Error('Dívida não encontrada');const amount=n(value);if(type==='Acréscimo'){d.balance=r(n(d.balance)+amount);d.original=r(n(d.original)+amount);d.events.push(event('Acréscimo',amount,note||'Juros, multa ou encargos.','increase'));}else if(type==='Desconto'){d.balance=Math.max(0,r(n(d.balance)-amount));d.events.push(event('Desconto',amount,note||'Desconto/abatimento.','decrease'));}else{d.balance=amount;d.events.push(event('Correção de saldo',amount,note||'Saldo informado pelo credor.','neutral'));}if(d.balance<=0)d.status='Quitada';return d;}
+  function renegotiate(data,debtId,agreedValue,parts,firstDue){const d=debts(data).find(x=>x.id===debtId);if(!d)throw new Error('Dívida não encontrada');const value=n(agreedValue);const count=Math.max(1,parseInt(parts||1,10));d.balance=value;d.status=count>1?'Renegociada':'Em negociação';d.events.push(event('Renegociação',value,'Acordo registrado; parcelas viraram contas futuras.','neutral'));const each=r(value/count);const created=[];for(let i=1;i<=count;i++){created.push(FinanceEngine.addBill(data,{name:`Parcela ${i}/${count} - ${d.name}`,flow:'A_PAGAR',expected:each,dueDate:i===1?firstDue:Models.today(),category:'Dívidas',walletId:'wallet_main',debtId:d.id}));}return {debt:d,bills:created};}
+  return {openDebts,total,minPayment,addDebt,pay,adjust,renegotiate,linkedBills};
+})();
