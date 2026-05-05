@@ -21,7 +21,7 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         webView.setWebViewClient(new WebViewClient());
         setContentView(webView);
-        webView.loadUrl("file:///android_asset/loader-mf.html");
+        webView.loadUrl("file:///android_asset/loader-debt.html");
     }
 
     @Override
