@@ -24,6 +24,12 @@ window.AppExtensions=(function(){
     if(action==='advanceDebt'){DebtUI.advanceDebtForm(id);return true;}
     if(action&&action.startsWith('saveAdvanceDebt:')){DebtUI.saveAdvanceDebt(action.split(':')[1]);return true;}
     if(action==='openDebt'){DebtUI.openDebt(id);return true;}
+
+    if(action==='exportBackup'){SettingsUI.exportBackup();return true;}
+    if(action==='importBackup'){SettingsUI.importBackup();return true;}
+    if(action==='editWallet'){FinanceUI.editWalletForm(id);return true;}
+    if(action&&action.startsWith('saveEditWallet:')){FinanceUI.saveEditWallet(action.split(':')[1]);return true;}
+    if(action==='deleteWallet'){FinanceUI.deleteWallet(id);return true;}
     return false;
   }
   function install(){
