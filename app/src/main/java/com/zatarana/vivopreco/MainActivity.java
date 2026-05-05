@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -25,6 +26,7 @@ public class MainActivity extends Activity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         webView.addJavascriptInterface(new NativeStorageBridge(this), "VivoStorage");
         webView.setWebViewClient(new WebViewClient());
+        webView.setWebChromeClient(new WebChromeClient());
         setContentView(webView);
         webView.loadUrl("file:///android_asset/loader-clean.html");
     }
@@ -39,7 +41,7 @@ public class MainActivity extends Activity {
     }
 
     public static class NativeStorageBridge {
-        private static final String PREFS_NAME = "vivopreco_clean_native_storage";
+        private static final String PREFS_NAME = "diasorganize_native_storage";
         private final SharedPreferences prefs;
 
         NativeStorageBridge(Context context) {
