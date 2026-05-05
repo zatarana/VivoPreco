@@ -96,6 +96,12 @@ context.TaskEngine.complete(data, task.id);
 assert('tarefa concluída', context.TaskEngine.completedTasks(data).length === 1);
 assert('subtarefa criada', context.TaskEngine.subtasks(data, task.id).length === 1);
 
+const recurring = context.TaskEngine.addTask(data, { title: 'Revisar matéria', projectId: 'project_study', dueDate: '2026-05-05', recurrence: 'diaria', seriesId: 'series_revisar_materia', estimatedMinutes: 30 });
+const recurringResult = context.TaskEngine.complete(data, recurring.id);
+assert('tarefa recorrente gera próxima ocorrência', recurringResult.next && recurringResult.next.dueDate === '2026-05-06');
+assert('próxima ocorrência mantém série', recurringResult.next.seriesId === 'series_revisar_materia');
+assert('não duplica próxima ocorrência se concluir de novo', data.tasks.filter(t => t.seriesId === 'series_revisar_materia' && t.dueDate === '2026-05-06' && !t.done).length === 1);
+
 const studyTask = context.TaskEngine.addTask(data, { title: 'Estudar Português', projectId: 'project_study', recurrence: 'diaria', seriesId: 'series_estudar_portugues', estimatedMinutes: 45 });
 context.TimeEngine.addManualLog(data, studyTask.id, 45, 'Sessão manual', context.Models.today());
 assert('tempo manual soma na tarefa', context.TimeEngine.taskTotal(data, studyTask.id) === 45);
