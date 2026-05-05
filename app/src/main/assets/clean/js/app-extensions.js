@@ -46,6 +46,7 @@ window.AppExtensions=(function(){
     if(action==='editTransaction'){FinanceUI.editTransactionForm(id);return true;}
     if(action&&action.startsWith('saveEditTransaction:')){FinanceUI.saveEditTransaction(action.split(':')[1]);return true;}
     if(action==='deleteTransaction'){FinanceUI.deleteTransaction(id);return true;}
+    if(action&&action.startsWith('financeReportRange:')){FinanceReportUI.render(data(),action.split(':')[1]);return true;}
 
     if(action==='showPlanning'){PlanningUI.showHub(data());return true;}
     if(action==='showCategories'){PlanningUI.showCategories(data());return true;}
