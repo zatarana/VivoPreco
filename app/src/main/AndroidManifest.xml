@@ -2,7 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
         android:allowBackup="true"
-        android:label="VivoPreco"
+        android:label="DiasOrganize"
+        android:icon="@drawable/ic_diasorganize"
+        android:roundIcon="@drawable/ic_diasorganize_round"
         android:theme="@style/AppTheme"
         android:supportsRtl="true">
         <activity
