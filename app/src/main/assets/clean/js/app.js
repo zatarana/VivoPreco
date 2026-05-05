@@ -10,14 +10,22 @@ window.App=(function(){
     try{
       if(action==='newTransaction')return FinanceUI.newTransactionForm();
       if(action==='saveTransaction')return FinanceUI.saveTransaction(data());
+      if(action==='newTransfer')return FinanceUI.newTransferForm();
+      if(action==='saveTransfer')return FinanceUI.saveTransfer();
       if(action==='newBill')return FinanceUI.newBillForm();
       if(action==='saveBill')return FinanceUI.saveBill(data());
       if(action==='settleBill')return FinanceUI.settleBill(data(),id);
+      if(action==='settleBillForm')return FinanceUI.settleBillForm(id);
+      if(action&&action.startsWith('saveSettleBill:'))return FinanceUI.saveSettleBill(action.split(':')[1]);
       if(action==='showWallets')return FinanceUI.showWallets(data());
       if(action==='newWallet')return FinanceUI.newWalletForm();
       if(action==='saveWallet')return FinanceUI.saveWallet();
       if(action==='setDefaultWallet')return FinanceUI.setDefaultWallet(id);
       if(action==='showBills')return FinanceUI.showBills(data());
+      if(action==='editBill')return FinanceUI.editBillForm(id);
+      if(action&&action.startsWith('saveEditBill:'))return FinanceUI.saveEditBill(action.split(':')[1]);
+      if(action==='deleteBill')return FinanceUI.deleteBill(id);
+      if(action==='showFinanceReport')return FinanceUI.showFinanceReport(data());
       if(action==='newDebt')return DebtUI.newDebtForm();
       if(action==='saveDebt')return DebtUI.saveDebt();
       if(action==='payDebt')return DebtUI.payDebtForm(id);
