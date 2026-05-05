@@ -76,6 +76,14 @@ window.AppExtensions=(function(){
     if(action==='editCard'){PlanningUI.editCardForm(id);return true;}
     if(action&&action.startsWith('saveEditCard:')){PlanningUI.saveEditCard(action.split(':')[1]);return true;}
     if(action==='deleteCard'){PlanningUI.deleteCard(id);return true;}
+    if(action==='openCard'){PlanningUI.openCard(id);return true;}
+    if(action==='newCardPurchase'){PlanningUI.newCardPurchaseForm(id);return true;}
+    if(action&&action.startsWith('saveCardPurchase:')){PlanningUI.saveCardPurchase(action.split(':')[1]);return true;}
+    if(action==='editCardPurchase'){PlanningUI.editCardPurchaseForm(id);return true;}
+    if(action&&action.startsWith('saveEditCardPurchase:')){PlanningUI.saveEditCardPurchase(action.split(':')[1]);return true;}
+    if(action==='deleteCardPurchase'){PlanningUI.deleteCardPurchase(id);return true;}
+    if(action==='closeCardInvoice'){PlanningUI.closeCardInvoiceForm(id);return true;}
+    if(action&&action.startsWith('saveCloseCardInvoice:')){PlanningUI.saveCloseCardInvoice(action.split(':')[1]);return true;}
     return false;
   }
   function install(){
