@@ -44,7 +44,9 @@ const data = {
   preferences: { defaultWalletId: 'wallet_main' },
   wallets: [
     context.Models.wallet(),
-    context.Models.wallet({ id: 'wallet_reserva', name: 'Reserva', initialBalance: -100 })
+    context.Models.wallet({ id: 'wallet_reserva', name: 'Reserva', type: 'poupança', initialBalance: -100 }),
+    context.Models.wallet({ id: 'wallet_zero', name: 'Zerada', type: 'carteira', initialBalance: 0 }),
+    context.Models.wallet({ id: 'wallet_invest', name: 'Investimentos', type: 'investimento', initialBalance: 250 })
   ],
   transactions: [],
   bills: [],
@@ -66,10 +68,16 @@ const data = {
   cardPurchases: []
 };
 
+const normalized = context.StorageService.write(JSON.parse(JSON.stringify(data)));
+assert('tipos de conta ficam restritos', normalized.wallets.every(w => ['corrente','poupança','investimento','carteira'].includes(w.type)));
+assert('saldo real aceita zero', normalized.wallets.find(w => w.id === 'wallet_zero').initialBalance === 0);
+assert('saldo real aceita negativo', normalized.wallets.find(w => w.id === 'wallet_reserva').initialBalance === -100);
+assert('saldo real de conta entra no saldo disponível', context.FinanceEngine.totalWalletBalance(normalized) === 150);
+
 context.FinanceEngine.addTransaction(data, { type: 'receita', value: 1000, description: 'Salário', category: 'Receita' });
 context.FinanceEngine.addTransaction(data, { type: 'despesa', value: 250, description: 'Mercado', category: 'Alimentação' });
 assert('saldo da carteira principal', context.FinanceEngine.walletBalance(data, 'wallet_main') === 750);
-assert('saldo total aceita carteira negativa', context.FinanceEngine.totalWalletBalance(data) === 650);
+assert('saldo total aceita carteira negativa e investimento', context.FinanceEngine.totalWalletBalance(data) === 900);
 
 context.FinanceEngine.addTransfer(data, { value: 100, fromWalletId: 'wallet_main', toWalletId: 'wallet_reserva' });
 assert('transferência reduz origem', context.FinanceEngine.walletBalance(data, 'wallet_main') === 650);
