@@ -55,7 +55,15 @@ const data = {
   ],
   tasks: [],
   timeLogs: [],
-  activeTimer: null
+  activeTimer: null,
+  categories: [
+    { id: 'cat_food', name: 'Alimentação', type: 'despesa' },
+    { id: 'cat_card', name: 'Cartão', type: 'despesa' }
+  ],
+  budgets: [],
+  goals: [],
+  cards: [],
+  cardPurchases: []
 };
 
 context.FinanceEngine.addTransaction(data, { type: 'receita', value: 1000, description: 'Salário', category: 'Receita' });
@@ -124,6 +132,15 @@ context.PlanningEngine.contributeGoal(data, goal.id, 800);
 assert('meta conclui ao atingir alvo', goal.status === 'Concluída');
 const card = context.PlanningEngine.addCard(data, { name: 'Cartão Teste', limit: 1500, closingDay: 5, dueDay: 12, walletId: 'wallet_main' });
 assert('cartão criado com limite', card.limit === 1500);
+const purchase = context.PlanningEngine.addCardPurchase(data, { cardId: card.id, description: 'Compra mercado', value: 120, category: 'Alimentação', date: '2026-05-05', invoiceMonth: '2026-05' });
+assert('compra no cartão registrada', purchase.value === 120 && data.cardPurchases.length === 1);
+assert('limite usado do cartão calcula compras abertas', context.PlanningEngine.cardOpenTotal(data, card.id) === 120);
+assert('limite disponível do cartão calcula corretamente', context.PlanningEngine.cardAvailableLimit(data, card.id) === 1380);
+const invoice = context.PlanningEngine.closeCardInvoice(data, card.id, '2026-05', '2026-05-12');
+assert('fechamento de fatura cria conta a pagar', invoice.bill && invoice.bill.flow === 'A_PAGAR' && invoice.bill.expected === 120);
+assert('compra fechada fica vinculada à conta', data.cardPurchases[0].billId === invoice.bill.id);
+assert('fatura fechada zera compras abertas do cartão', context.PlanningEngine.cardOpenTotal(data, card.id) === 0);
+assert('conta da fatura entra no a pagar', context.FinanceEngine.payable(data) >= 120);
 
 const audit = context.AuditService.run(data);
 assert('auditoria sem erros críticos', audit.ok === true);
