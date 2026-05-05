@@ -2,21 +2,6 @@ window.AppExtensions=(function(){
   function data(){return StorageService.read();}
   function run(action,id){
     if(!action)return false;
-    if(action==='newProjectTask'){TasksUI.newTaskForm(id);return true;}
-    if(action==='reopenTask'){TasksUI.reopenTask(id);return true;}
-    if(action==='editTask'){TasksUI.editTaskForm(id);return true;}
-    if(action&&action.startsWith('saveEditTask:')){TasksUI.saveEditTask(action.split(':')[1]);return true;}
-    if(action==='deleteTask'){TasksUI.deleteTask(id);return true;}
-    if(action==='newSubtask'){TasksUI.newSubtaskForm(id);return true;}
-    if(action&&action.startsWith('saveSubtask:')){TasksUI.saveSubtask(action.split(':')[1]);return true;}
-    if(action==='newComment'){TasksUI.newCommentForm(id);return true;}
-    if(action&&action.startsWith('saveComment:')){TasksUI.saveComment(action.split(':')[1]);return true;}
-    if(action==='showUpcoming'){TasksUI.showUpcoming(data());return true;}
-    if(action==='showTaskFilters'){TasksUI.showTaskFilters(data());return true;}
-    if(action==='showLabels'){TasksUI.showLabels(data());return true;}
-    if(action==='openLabel'){TasksUI.openLabel(id);return true;}
-    if(action==='openProject'){TasksUI.openProject(id);return true;}
-    if(action==='showTaskBoard'){TasksUI.showTaskBoard(data());return true;}
 
     if(action==='addTime'){TimeUI.addTimeForm(id);return true;}
     if(action&&action.startsWith('saveManualTime:')){TimeUI.saveManualTime(action.split(':')[1]);return true;}
@@ -42,6 +27,9 @@ window.AppExtensions=(function(){
     if(action==='editWallet'){FinanceUI.editWalletForm(id);return true;}
     if(action&&action.startsWith('saveEditWallet:')){FinanceUI.saveEditWallet(action.split(':')[1]);return true;}
     if(action==='deleteWallet'){FinanceUI.deleteWallet(id);return true;}
+    if(action==='editTransaction'){FinanceUI.editTransactionForm(id);return true;}
+    if(action&&action.startsWith('saveEditTransaction:')){FinanceUI.saveEditTransaction(action.split(':')[1]);return true;}
+    if(action==='deleteTransaction'){FinanceUI.deleteTransaction(id);return true;}
 
     if(action==='showPlanning'){PlanningUI.showHub(data());return true;}
     if(action==='showCategories'){PlanningUI.showCategories(data());return true;}
@@ -67,8 +55,8 @@ window.AppExtensions=(function(){
     if(window.IntegrationEngine)IntegrationEngine.install();
     document.addEventListener('click',function(e){
       const a=e.target.closest('[data-action]');
-      if(!a)return;
-      try{run(a.dataset.action,a.dataset.id);}catch(err){console.error(err);Dom.toast(err.message||'Não foi possível concluir a ação.');}
+      if(!a||a.dataset.handled==='1')return;
+      try{if(run(a.dataset.action,a.dataset.id)){a.dataset.handled='1';}}catch(err){console.error(err);Dom.toast(err.message||'Não foi possível concluir a ação.');}
     });
   }
   setTimeout(install,0);
