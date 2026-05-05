@@ -18,6 +18,17 @@ window.AppExtensions=(function(){
     if(action==='openProject'){TasksUI.openProject(id);return true;}
     if(action==='showTaskBoard'){TasksUI.showTaskBoard(data());return true;}
 
+    if(action==='addTime'){TimeUI.addTimeForm(id);return true;}
+    if(action&&action.startsWith('saveManualTime:')){TimeUI.saveManualTime(action.split(':')[1]);return true;}
+    if(action==='timer'){TimeUI.timerPanel(id);return true;}
+    if(action&&action.startsWith('startTimer:')){TimeUI.startTimer(action.split(':')[1]);return true;}
+    if(action==='pauseTimer'){TimeUI.pauseTimer();return true;}
+    if(action==='resumeTimer'){TimeUI.resumeTimer();return true;}
+    if(action==='finishTimer'){TimeUI.finishTimer();return true;}
+    if(action==='cancelTimer'){TimeUI.cancelTimer();return true;}
+    if(action==='timeDetails'){TimeUI.taskTimeDetails(id);return true;}
+    if(action==='projectTime'){TimeUI.projectTime(id);return true;}
+
     if(action==='correctDebt'){DebtUI.correctDebtForm(id);return true;}
     if(action&&action.startsWith('saveCorrectDebt:')){DebtUI.saveCorrectDebt(action.split(':')[1]);return true;}
     if(action==='contestDebt'){DebtUI.contestDebt(id);return true;}
