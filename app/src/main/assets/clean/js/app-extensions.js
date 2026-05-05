@@ -28,6 +28,7 @@ window.AppExtensions=(function(){
     if(action==='cancelTimer'){TimeUI.cancelTimer();return true;}
     if(action==='timeDetails'){TimeUI.taskTimeDetails(id);return true;}
     if(action==='projectTime'){TimeUI.projectTime(id);return true;}
+    if(action&&action.startsWith('projectTimeRange:')){const parts=action.split(':');TimeUI.projectTime(parts[1],parts[2]);return true;}
 
     if(action==='correctDebt'){DebtUI.correctDebtForm(id);return true;}
     if(action&&action.startsWith('saveCorrectDebt:')){DebtUI.saveCorrectDebt(action.split(':')[1]);return true;}
