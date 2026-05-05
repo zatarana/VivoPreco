@@ -29,6 +29,7 @@ window.BackupService=(function(){
       debts:(data.debts||[]).length,
       tasks:(data.tasks||[]).length,
       projects:(data.projects||[]).length,
+      timeLogs:(data.timeLogs||[]).length,
       categories:(data.categories||[]).length,
       budgets:(data.budgets||[]).length,
       goals:(data.goals||[]).length,
