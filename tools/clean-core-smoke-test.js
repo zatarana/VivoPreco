@@ -45,15 +45,17 @@ const data = {
   wallets: [
     context.Models.wallet(),
     context.Models.wallet({ id: 'wallet_reserva', name: 'Reserva', type: 'poupança', initialBalance: -100 }),
-    context.Models.wallet({ id: 'wallet_zero', name: 'Zerada', type: 'carteira', initialBalance: 0 }),
-    context.Models.wallet({ id: 'wallet_invest', name: 'Investimentos', type: 'investimento', initialBalance: 250 })
+    context.Models.wallet({ id: 'wallet_zero', name: 'Zerada', type: 'carteira', realBalance: 0 }),
+    context.Models.wallet({ id: 'wallet_invest', name: 'Investimentos', type: 'investimento', realBalance: 250 })
   ],
   transactions: [],
   bills: [],
   debts: [],
   projects: [
     { id: 'project_inbox', name: 'Inbox', sections: ['Entrada'], view: 'list', kind: 'comum', weeklyTargetMinutes: 0 },
-    { id: 'project_study', name: 'Estudos', sections: ['Matérias'], view: 'list', kind: 'estudos', weeklyTargetMinutes: 600 }
+    { id: 'project_study', name: 'Estudos', sections: ['Matérias'], view: 'list', kind: 'estudos', weeklyTargetMinutes: 600 },
+    { id: 'project_move', name: 'Mover destino', sections: ['Entrada'], view: 'list', kind: 'comum', weeklyTargetMinutes: 0 },
+    { id: 'project_delete', name: 'Apagar origem', sections: ['Entrada'], view: 'list', kind: 'comum', weeklyTargetMinutes: 0 }
   ],
   tasks: [],
   timeLogs: [],
@@ -70,8 +72,9 @@ const data = {
 
 const normalized = context.StorageService.write(JSON.parse(JSON.stringify(data)));
 assert('tipos de conta ficam restritos', normalized.wallets.every(w => ['corrente','poupança','investimento','carteira'].includes(w.type)));
-assert('saldo real aceita zero', normalized.wallets.find(w => w.id === 'wallet_zero').initialBalance === 0);
-assert('saldo real aceita negativo', normalized.wallets.find(w => w.id === 'wallet_reserva').initialBalance === -100);
+assert('saldo real aceita zero', normalized.wallets.find(w => w.id === 'wallet_zero').realBalance === 0);
+assert('saldo real aceita negativo', normalized.wallets.find(w => w.id === 'wallet_reserva').realBalance === -100);
+assert('saldo legado initialBalance migra para realBalance', normalized.wallets.find(w => w.id === 'wallet_reserva').initialBalance === -100);
 assert('saldo real de conta entra no saldo disponível', context.FinanceEngine.totalWalletBalance(normalized) === 150);
 
 context.FinanceEngine.addTransaction(data, { type: 'receita', value: 1000, description: 'Salário', category: 'Receita' });
@@ -103,6 +106,9 @@ const parcelDebt = context.DebtEngine.addDebt(data, { name: 'Financiamento', ins
 assert('dívida parcelada cria contas futuras', data.bills.length === billsBeforeParcelDebt + 96);
 assert('dívida parcelada não cria transação', data.transactions.length === txBeforeParcelDebt);
 assert('dívida parcelada calcula saldo total', parcelDebt.balance === 28800);
+const billsBeforeFullDelete = data.bills.length;
+context.DebtEngine.deleteDebt(data, parcelDebt.id, true);
+assert('exclusão completa de dívida remove parcelas', data.bills.length === billsBeforeFullDelete - 96 && !data.debts.find(d => d.id === parcelDebt.id));
 context.DebtEngine.pay(data, debt.id, 300, 300);
 assert('pagar dívida cria despesa', context.FinanceEngine.expense(data) === expenseBeforeDebt + 300);
 assert('pagar dívida reduz saldo vivo', context.DebtEngine.total(data) >= 700);
@@ -125,6 +131,16 @@ context.TaskEngine.addComment(data, task.id, 'Comentário');
 context.TaskEngine.complete(data, task.id);
 assert('tarefa concluída', context.TaskEngine.completedTasks(data).length === 1);
 assert('subtarefa criada', context.TaskEngine.subtasks(data, task.id).length === 1);
+const moveTask = context.TaskEngine.addTask(data, { title: 'Mover tarefa', projectId: 'project_move' });
+context.TimeEngine.addManualLog(data, moveTask.id, 20, 'Antes de mover', context.Models.today());
+context.TaskEngine.deleteProject(data, 'project_move', 'project_inbox', 'move');
+assert('excluir projeto movendo preserva tarefa', data.tasks.find(t => t.id === moveTask.id).projectId === 'project_inbox');
+assert('excluir projeto movendo atualiza tempo', data.timeLogs.find(l => l.taskId === moveTask.id).projectId === 'project_inbox');
+const deleteTask = context.TaskEngine.addTask(data, { title: 'Apagar tarefa', projectId: 'project_delete' });
+context.TimeEngine.addManualLog(data, deleteTask.id, 15, 'Antes de apagar', context.Models.today());
+context.TaskEngine.deleteProject(data, 'project_delete', null, 'delete_tasks');
+assert('excluir projeto apagando remove tarefas', !data.tasks.find(t => t.id === deleteTask.id));
+assert('excluir projeto apagando remove tempo', !data.timeLogs.find(l => l.taskId === deleteTask.id));
 
 const recurring = context.TaskEngine.addTask(data, { title: 'Revisar matéria', projectId: 'project_study', dueDate: '2026-05-05', recurrence: 'diaria', seriesId: 'series_revisar_materia', estimatedMinutes: 30 });
 const recurringResult = context.TaskEngine.complete(data, recurring.id);
@@ -163,6 +179,12 @@ assert('fechamento de fatura cria conta a pagar', invoice.bill && invoice.bill.f
 assert('compra fechada fica vinculada à conta', data.cardPurchases[0].billId === invoice.bill.id);
 assert('fatura fechada zera compras abertas do cartão', context.PlanningEngine.cardOpenTotal(data, card.id) === 0);
 assert('conta da fatura entra no a pagar', context.FinanceEngine.payable(data) >= 120);
+const installments = context.PlanningEngine.addCardPurchase(data, { cardId: card.id, description: 'Compra parcelada', value: 1200, installments: 12, category: 'Cartão', date: '2026-05-05', invoiceMonth: '2026-05' });
+assert('compra parcelada gera 12 parcelas', Array.isArray(installments) && installments.length === 12);
+assert('compra parcelada distribui valor por mês', data.cardPurchases.filter(p => p.description === 'Compra parcelada' && p.invoiceMonth === '2026-06').length === 1);
+assert('compra parcelada soma valor aberto total', context.PlanningEngine.cardOpenTotal(data, card.id) === 1200);
+const juneInvoice = context.PlanningEngine.closeCardInvoice(data, card.id, '2026-06', '2026-06-12');
+assert('fatura mensal fecha apenas parcelas do mês', juneInvoice.total === 100 && juneInvoice.purchases.length === 1);
 
 const audit = context.AuditService.run(data);
 assert('auditoria sem erros críticos', audit.ok === true);
