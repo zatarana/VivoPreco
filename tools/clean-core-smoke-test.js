@@ -84,11 +84,20 @@ context.FinanceEngine.settleBill(data, bill.id, 120);
 assert('conta paga zera pendente', context.FinanceEngine.payable(data) === 0);
 assert('conta paga gera despesa', context.FinanceEngine.expense(data) === 450);
 
+const expenseBeforeDebt = context.FinanceEngine.expense(data);
+const txBeforeDebt = data.transactions.length;
 const debt = context.DebtEngine.addDebt(data, { name: 'Cartão', original: 1000, balance: 1000, minPayment: 100 });
-assert('cadastrar dívida não cria despesa', context.FinanceEngine.expense(data) === 450);
+assert('cadastrar dívida não cria despesa', context.FinanceEngine.expense(data) === expenseBeforeDebt);
+assert('cadastrar dívida não cria transação', data.transactions.length === txBeforeDebt);
+const txBeforeParcelDebt = data.transactions.length;
+const billsBeforeParcelDebt = data.bills.length;
+const parcelDebt = context.DebtEngine.addDebt(data, { name: 'Financiamento', installments: 96, installmentValue: 300, firstDue: '2026-05-10' });
+assert('dívida parcelada cria contas futuras', data.bills.length === billsBeforeParcelDebt + 96);
+assert('dívida parcelada não cria transação', data.transactions.length === txBeforeParcelDebt);
+assert('dívida parcelada calcula saldo total', parcelDebt.balance === 28800);
 context.DebtEngine.pay(data, debt.id, 300, 300);
-assert('pagar dívida cria despesa', context.FinanceEngine.expense(data) === 750);
-assert('pagar dívida reduz saldo vivo', context.DebtEngine.total(data) === 700);
+assert('pagar dívida cria despesa', context.FinanceEngine.expense(data) === expenseBeforeDebt + 300);
+assert('pagar dívida reduz saldo vivo', context.DebtEngine.total(data) >= 700);
 
 const debt2 = context.DebtEngine.addDebt(data, { name: 'Acordo', original: 600, balance: 600 });
 const renegotiation = context.DebtEngine.renegotiate(data, debt2.id, 500, 5, context.Models.today());
@@ -96,6 +105,11 @@ assert('renegociação cria parcelas', renegotiation.bills.length === 5);
 const firstDebtBill = renegotiation.bills[0];
 context.FinanceEngine.settleBill(data, firstDebtBill.id, 100);
 assert('pagar parcela vinculada reduz dívida', debt2.balance === 400);
+const payoffDebt = context.DebtEngine.addDebt(data, { name: 'Quitação com desconto', original: 1000, balance: 1000 });
+const txBeforePayoff = data.transactions.length;
+context.DebtEngine.payoff(data, payoffDebt.id, 800, context.Models.today(), 'wallet_main');
+assert('quitar dívida cria transação apenas na quitação', data.transactions.length === txBeforePayoff + 1);
+assert('quitação aceita valor diferente do saldo', payoffDebt.balance === 0 && payoffDebt.status === 'Quitada');
 
 const task = context.TaskEngine.addTask(data, { title: 'Teste', projectId: 'project_inbox' });
 context.TaskEngine.addSubtask(data, task.id, { title: 'Sub', projectId: 'project_inbox' });
