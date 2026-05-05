@@ -3,6 +3,8 @@ window.AppExtensions=(function(){
   function run(action,id){
     if(!action)return false;
 
+    if(action==='monthlyFinance'){FinanceMonthlyUI.render(data(),FinanceMonthlyUI.currentMonth());return true;}
+    if(action&&action.startsWith('monthlyFinance:')){FinanceMonthlyUI.render(data(),action.split(':')[1]);return true;}
     if(action==='showDebtInstallments'){UXRefinements.showDebtInstallments(id);return true;}
 
     if(action==='editProject'){TasksUI.editProjectForm(id);return true;}
